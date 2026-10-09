@@ -1,24 +1,10 @@
 import folium
-import json
 import pandas as pd
 
-# 1. Load your map data cleanly using Python's built-in json engine
-with open("homabay_bundle.json", "r") as f:
-    geo_data_hb = json.load(f)
+# 1. Read your data bundle directly using Pandas
+df_combined_hb = pd.read_json("homabay_bundle.json")
 
-# 2. Extract the statistical data from the JSON attributes into a DataFrame
-features = geo_data_hb['features']
-data_list = []
-for f in features:
-    props = f['properties']
-    # Grabs the ward identifier and flood hazard value from your file properties
-    data_list.append({
-        "Ward Name": props.get("ward", props.get("Ward Name")),
-        "Flood Hazard Area (%) (real)": props.get("Flood Hazard Area (%) (real)", 0)
-    })
-df_combined_hb = pd.DataFrame(data_list)
-
-# 3. Initialize the Map with the pristine Esri background tiles fix
+# 2. Initialize your Map with the pristine Esri background tiles fix
 m_hb = folium.Map(
     location=[-0.6, 34.5], 
     zoom_start=10, 
@@ -26,9 +12,9 @@ m_hb = folium.Map(
     attr="Esri ArcGIS"
 )
 
-# 4. Generate the Choropleth layer
+# 3. Generate the Choropleth layer matching your columns directly
 folium.Choropleth(
-    geo_data=geo_data_hb,
+    geo_data="homabay_bundle.json",
     data=df_combined_hb,
     columns=["Ward Name", "Flood Hazard Area (%) (real)"],
     key_on="feature.properties.ward",
@@ -39,6 +25,6 @@ folium.Choropleth(
     legend_name="Flood Hazard Area (%)"
 ).add_to(m_hb)
 
-# 5. Compile the final interactive file directly for GitHub Pages
+# 4. Compile the final interactive file directly for GitHub Pages
 m_hb.save("index.html")
-print("Map successfully compiled without Geopandas!")
+print("Map successfully compiled!")
