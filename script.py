@@ -7,7 +7,7 @@ import geopandas as gpd
 homabay_wards = gpd.read_file("homabay_bundle.json") 
 
 # This loads your population risk data sheet
-df_combined_hb = pd.read_csv("your_data_file.csv") # Make sure this matches your actual file name!
+df_combined_hb = pd.read_file("homabay_bundle.json") # Make sure this matches your actual file name!
 # --------------------------------------------
 
 # Replace your folium.Map initialization line with this:
