@@ -1,39 +1,44 @@
 import folium
+import json
 import pandas as pd
-import geopandas as gpd
 
-# ---- ADD THESE MISSING LINES RIGHT HERE ----
-# This loads your map boundaries from your repository files
-homabay_wards = gpd.read_file("homabay_bundle.json") 
+# 1. Load your map data cleanly using Python's built-in json engine
+with open("homabay_bundle.json", "r") as f:
+    geo_data_hb = json.load(f)
 
-# This loads your population risk data sheet
-df_combined_hb = pd.read_file("homabay_bundle.json") # Make sure this matches your actual file name!
-# --------------------------------------------
+# 2. Extract the statistical data from the JSON attributes into a DataFrame
+features = geo_data_hb['features']
+data_list = []
+for f in features:
+    props = f['properties']
+    # Grabs the ward identifier and flood hazard value from your file properties
+    data_list.append({
+        "Ward Name": props.get("ward", props.get("Ward Name")),
+        "Flood Hazard Area (%) (real)": props.get("Flood Hazard Area (%) (real)", 0)
+    })
+df_combined_hb = pd.DataFrame(data_list)
 
-# Replace your folium.Map initialization line with this:
+# 3. Initialize the Map with the pristine Esri background tiles fix
 m_hb = folium.Map(
     location=[-0.6, 34.5], 
     zoom_start=10, 
-    tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    tiles="https://arcgisonline.com{z}/{y}/{x}",
     attr="Esri ArcGIS"
 )
-merged_hb = homabay_wards.merge(df_combined_hb, left_on="ward", right_on="Ward Name")
+
+# 4. Generate the Choropleth layer
 folium.Choropleth(
-    geo_data=merged_hb, data=merged_hb,
+    geo_data=geo_data_hb,
+    data=df_combined_hb,
     columns=["Ward Name", "Flood Hazard Area (%) (real)"],
     key_on="feature.properties.ward",
-    fill_color="YlOrRd", fill_opacity=0.8, line_opacity=0.5, line_color="black",
-    legend_name="Flood Hazard Area (%) — darker red = higher flood risk",
-    bins=[0, 1, 5, 10, 20, 35]
+    fill_color="YlOrRd",
+    fill_opacity=0.7,
+    line_opacity=0.5,
+    line_color="black",
+    legend_name="Flood Hazard Area (%)"
 ).add_to(m_hb)
-folium.GeoJson(
-    merged_hb, style_function=lambda x: {"fillColor": "transparent", "color": "transparent"},
-    tooltip=folium.GeoJsonTooltip(
-        fields=["Ward Name", "Total Population (real)", "Flood Hazard Area (%) (real)", "Estimated Population at Risk"],
-        aliases=["Ward:", "Population:", "Flood Risk %:", "Population at Risk:"], localize=True
-    )
-).add_to(m_hb)
-m_hb.save("homabay_flood_risk_map.html")
-print("Homabay map saved!")
+
+# 5. Compile the final interactive file directly for GitHub Pages
 m_hb.save("index.html")
-print("Map successfully compiled!")
+print("Map successfully compiled without Geopandas!")
