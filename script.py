@@ -56,3 +56,5 @@ folium.GeoJson(
 # 7. Compile the final interactive file directly for GitHub Pages
 m_hb.save("index.html")
 print("Map successfully compiled with custom nested JSON data structure!")
+
+#Clean rerun fix
